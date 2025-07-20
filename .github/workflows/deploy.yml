@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy Vite React PWA to GitHub Pages
 
 on:
   push:
