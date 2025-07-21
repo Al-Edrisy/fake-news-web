@@ -6,7 +6,10 @@ import path from "path";
 function flattenHtmlOutput() {
   return {
     name: 'flatten-html-output',
-    generateBundle(options, bundle) {
+    generateBundle(
+      options: unknown,
+      bundle: Record<string, import('rollup').OutputAsset | import('rollup').OutputChunk>
+    ) {
       for (const file of Object.keys(bundle)) {
         if (file.endsWith('.html') && file.startsWith('src/')) {
           const asset = bundle[file];
