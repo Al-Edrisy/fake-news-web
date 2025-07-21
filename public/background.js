@@ -189,12 +189,12 @@ async function verifyClaimInBackground(claim, tabId) {
       // Hide loading indicator
       safeSendMessage(tabId, { action: 'hideLoadingIndicator' });
       
-      // Play notification sound if enabled
-      chrome.storage.sync.get(['soundEnabled'], (result) => {
-        if (result.soundEnabled !== false) { // Default to true
-          playNotificationSound();
-        }
-      });
+      // Don't play notification sound here - it will be played in content script if needed
+      // chrome.storage.sync.get(['soundEnabled'], (result) => {
+      //   if (result.soundEnabled !== false) { // Default to true
+      //     playNotificationSound();
+      //   }
+      // });
 
       // Send result to content script
       safeSendMessage(tabId, {
@@ -245,15 +245,19 @@ function playNotificationSound() {
     // Create audio from extension assets
     const audio = new Audio(chrome.runtime.getURL('notification.mp3'));
     audio.volume = 0.6; // Adjust volume
-    audio.play().catch(e => console.log('Sound playback failed:', e));
+    
+    // Only play if we're in a user gesture context, otherwise just log
+    audio.play().catch(e => {
+      console.log('Sound playback failed (likely not in user gesture context):', e);
+      // Don't fallback to Web Audio API as it will also fail
+    });
   } catch (error) {
     console.log('Could not play notification sound:', error);
-    // Fallback to Web Audio API
-    fallbackNotificationSound();
+    // Don't fallback to Web Audio API as it will also fail outside user gesture
   }
 }
 
-// Fallback notification sound using Web Audio API
+// Fallback notification sound using Web Audio API (only for user gesture contexts)
 function fallbackNotificationSound() {
   try {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -460,19 +464,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
           console.log('Content script auto-injected for', origin);
         });
       } else {
-        // Request permission for this site
-        chrome.permissions.request({origins: [origin]}, (granted) => {
-          if (granted) {
-            chrome.scripting.executeScript({
-              target: { tabId: tabId },
-              files: ['content.js']
-            }, () => {
-              console.log('Content script injected after permission for', origin);
-            });
-          } else {
-            console.log('User denied permission for', origin);
-          }
-        });
+        // Don't automatically request permission - let user do it manually
+        // This prevents the "user gesture" error
+        console.log('Permission not granted for', origin, '- user must grant manually');
       }
     });
   }

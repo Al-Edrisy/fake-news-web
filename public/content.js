@@ -63,6 +63,14 @@ if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage)
       
       if (request.action === 'showVerificationResult') {
         showVerificationPopup(request.result, request.claim);
+        
+        // Play notification sound if enabled (this is now in user gesture context)
+        chrome.storage.sync.get(['soundEnabled'], (result) => {
+          if (result.soundEnabled !== false) { // Default to true
+            playCustomSound();
+          }
+        });
+        
         sendResponse({ success: true });
       }
       
@@ -840,7 +848,7 @@ function playCustomSound() {
     const audio = new Audio(chrome.runtime.getURL('notification.mp3'));
     audio.volume = 1.0; // Always 100%
     audio.play().catch(error => {
-      console.log('Could not play custom notification sound:', error);
+      console.log('Could not play custom notification sound (likely not in user gesture context):', error);
     });
   } catch (error) {
     console.log('Custom sound not available:', error);
