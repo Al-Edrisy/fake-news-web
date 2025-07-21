@@ -14,7 +14,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: "/fake-news-web/",
   build: {
     rollupOptions: {
       input: {
